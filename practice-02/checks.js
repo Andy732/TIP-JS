@@ -355,6 +355,40 @@ check("35. Работа с другим набором, без зависимо�
 //   assert.deepEqual(result, ...);
 // });
 
+
+check("Собственный 1. Добавление после удаления: освободившийся id можно использовать снова", () => {
+    const initial = fixture();
+    const removed = expectTasks(removeTask(initial, 7));
+    const added = expectTasks(addTask(removed, 7, "Новая задача с прежним id", "low"));
+    assert.deepEqual(added.map((task) => task.id), [1, 4, 10, 7]);
+    assert.deepEqual(getTaskStats(added), { total: 4, completed: 2, pending: 2, progress: 50 });
+    assert.equal(findTaskById(added, 7).title, "Новая задача с прежним id");
+    assert.deepEqual(initial, fixture());
+});
+
+check("Собственный 2. Изменение первой и последней записи", () => {
+    const initial = fixture();
+    const step1 = expectTasks(setTaskCompleted(initial, 1, false));
+    const step2 = expectTasks(setTaskCompleted(step1, 10, false));
+    assert.deepEqual(getTaskStats(step2), { total: 4, completed: 0, pending: 4, progress: 0 });
+    assert.equal(step2[0].title, "Изучить функции");
+    assert.equal(step2[3].title, "Оформить README");
+    assert.notEqual(step2[0], initial[0]);
+    assert.notEqual(step2[3], initial[3]);
+    assert.deepEqual(initial, fixture());
+});
+
+check("Собственный 3. Несколько обновлений подряд и отказ в середине не портят состояние", () => {
+    const initial = fixture();
+    let current = expectTasks(setTaskCompleted(initial, 4, true));
+    current = expectTasks(setTaskCompleted(current, 7, true));
+    const failed = renameTask(current, 99, "Несуществующая задача");
+    expectFailure(failed);
+    assert.deepEqual(getTaskStats(current), { total: 4, completed: 4, pending: 0, progress: 100 });
+    assert.deepEqual(getPendingTasks(current), []);
+    assert.deepEqual(initial, fixture());
+});
+
 console.log(`\nПроверок пройдено: ${passed}; не пройдено: ${failed}.`);
 if (failed > 0) {
     process.exitCode = 1;

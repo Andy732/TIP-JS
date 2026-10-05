@@ -1,6 +1,5 @@
 import { demoTasks, variantNumber, variantTasks } from "./data.js";
 import {
-    createTask,
     findTaskById,
     getPendingTasks,
     getTaskTitles,
@@ -11,20 +10,122 @@ import {
     removeTask,
 } from "./task-service.js";
 
-console.log("ПР2. Заготовка демонстрационного сценария");
-console.log("Количество задач в общем наборе:", demoTasks.length);
-console.log("Номер варианта:", variantNumber);
-console.log("Количество задач в индивидуальном наборе:", variantTasks.length);
+function printStats(label, tasks) {
+    const { total, completed, pending, progress } = getTaskStats(tasks);
+    console.log(`${label}: всего ${total}, выполнено ${completed}, осталось ${pending}`);
+    if (total === 0) {
+        console.log("Задач пока нет");
+    } else {
+        console.log(`Прогресс: ${progress.toFixed(1)}%`);
+    }
+}
 
-// TODO: после реализации функций выполнить общий сценарий из раздела 6.5.
-// Текущее состояние хранится в локальной переменной:
-// let currentTasks = demoTasks;
-// После успешной операции currentTasks получает result.tasks.
-// При result.ok === false необходимо вывести ошибку, не заменяя состояние.
-// Сводка выводится после каждого этапа; вычисления выполняются в task-service.js.
+console.log("=== Общий сценарий (demoTasks) ===");
 
-// TODO: выполнить отдельный сценарий для variantTasks по разделу 7.
-// Общий набор demoTasks не заменяется данными варианта.
+let currentTasks = demoTasks;
 
-// TODO: показать хотя бы одну обработанную ошибку и неизменность исходных данных.
-// Для удобного вывода объектов допустимо использовать console.table().
+console.log("Исходные задачи:");
+console.table(currentTasks);
+console.log("Названия:", getTaskTitles(currentTasks));
+console.log("Невыполненные id:", getPendingTasks(currentTasks).map((task) => task.id));
+printStats("Исходный набор", currentTasks);
+
+const added = addTask(currentTasks, 20, "Добавить проверку", "high");
+if (added.ok) {
+    currentTasks = added.tasks;
+} else {
+    console.error(`Ошибка: ${added.error}`);
+}
+printStats("После добавления id = 20", currentTasks);
+
+const completedResult = setTaskCompleted(currentTasks, 4, true);
+if (completedResult.ok) {
+    currentTasks = completedResult.tasks;
+} else {
+    console.error(`Ошибка: ${completedResult.error}`);
+}
+printStats("После выполнения id = 4", currentTasks);
+
+const renamed = renameTask(currentTasks, 10, "Подготовить инструкцию запуска");
+if (renamed.ok) {
+    currentTasks = renamed.tasks;
+} else {
+    console.error(`Ошибка: ${renamed.error}`);
+}
+printStats("После переименования id = 10", currentTasks);
+
+const removed = removeTask(currentTasks, 7);
+if (removed.ok) {
+    currentTasks = removed.tasks;
+} else {
+    console.error(`Ошибка: ${removed.error}`);
+}
+printStats("После удаления id = 7", currentTasks);
+
+console.log("Итоговые id:", currentTasks.map((task) => task.id));
+console.log("Невыполненная задача:", getPendingTasks(currentTasks));
+
+console.log("--- Обработка отказа ---");
+const duplicate = addTask(currentTasks, 4, "Повторная задача");
+if (duplicate.ok) {
+    currentTasks = duplicate.tasks;
+} else {
+    console.error(`Ошибка: ${duplicate.error}`);
+}
+printStats("После неудачного добавления", currentTasks);
+
+console.log("--- Исходный demoTasks не изменился ---");
+console.table(demoTasks);
+console.log("Задача id = 4 в исходном наборе:", findTaskById(demoTasks, 4));
+
+console.log("");
+console.log(`=== Сценарий варианта ${variantNumber} (variantTasks) ===`);
+
+function applyResult(state, result) {
+    if (result.ok) {
+        return result.tasks;
+    }
+    console.error(`Ошибка: ${result.error}`);
+    return state;
+}
+
+const variantSnapshot = JSON.stringify(variantTasks);
+let variantState = variantTasks;
+
+console.log("Исходные данные варианта:");
+console.table(variantState);
+printStats("Исходный набор варианта", variantState);
+
+variantState = applyResult(
+    variantState,
+    addTask(variantState, 80, "Провести итоговую проверку проекта", "high")
+);
+printStats("После добавления id = 80", variantState);
+
+variantState = applyResult(variantState, setTaskCompleted(variantState, 11, true));
+printStats("После выполнения id = 11", variantState);
+
+variantState = applyResult(
+    variantState,
+    renameTask(variantState, 23, "Согласовать план работы с преподавателем")
+);
+printStats("После переименования id = 23", variantState);
+
+variantState = applyResult(variantState, removeTask(variantState, 37));
+printStats("После удаления id = 37", variantState);
+
+console.log("--- Повторное добавление id = 80 ---");
+variantState = applyResult(
+    variantState,
+    addTask(variantState, 80, "Другое название", "low")
+);
+printStats("После отказа", variantState);
+
+console.log("Итоговые задачи варианта:");
+console.table(variantState);
+printStats("Итог варианта", variantState);
+
+console.log(
+    "variantTasks не изменился:",
+    JSON.stringify(variantTasks) === variantSnapshot
+);

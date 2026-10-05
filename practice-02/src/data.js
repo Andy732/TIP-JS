@@ -7,7 +7,13 @@ export const demoTasks = [
     { id: 10, title: "Оформить README", completed: true, priority: "medium" },
 ];
 
-// TODO: указать свой вариант и подготовить шесть задач по разделу 7 методички.
-// Пустой массив — заготовка, а не выполненный индивидуальный вариант.
-export const variantNumber = null;
-export const variantTasks = [];
+// Вариант 1: подготовка учебного проекта. Выполнено изначально 0 задач (K = 0).
+export const variantNumber = 1;
+export const variantTasks = [
+    { id: 11, title: "Выбрать тему учебного проекта", completed: false, priority: "high" },
+    { id: 23, title: "Составить план работы", completed: false, priority: "medium" },
+    { id: 37, title: "Собрать требования к проекту", completed: false, priority: "medium" },
+    { id: 41, title: "Подготовить структуру репозитория", completed: false, priority: "low" },
+    { id: 58, title: "Написать документацию проекта", completed: false, priority: "medium" },
+    { id: 64, title: "Подготовить презентацию результатов", completed: false, priority: "high" },
+];
